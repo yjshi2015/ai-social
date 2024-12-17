@@ -4,7 +4,6 @@ import { NextResponse } from 'next/server';
 export async function POST(request: Request) {
   try {
     const formData = await request.formData();
-    const prompt = formData.get('prompt');
 
     const response = await fetch('https://api.stability.ai/v2beta/stable-image/generate/core', {
       method: 'POST',
@@ -15,9 +14,11 @@ export async function POST(request: Request) {
       body: formData,
     });
 
+
     if (!response.ok) {
       const errorData = await response.json();
-      throw new Error(`Stability API error: ${JSON.stringify(errorData)}`);
+      const errorMessage = response.statusText || errorData.statusText || '发生未知错误，请稍后再试。';
+      throw new Error(`Stability API error: ${errorMessage}`);
     }
 
     const imageBlob = await response.blob();
@@ -27,8 +28,11 @@ export async function POST(request: Request) {
       }
     });
   } catch (error) {
-    console.error('生成图片失败:', error);
-    return NextResponse.json({ error: '生成图片失败' }, { status: 500 });
+    console.error(error);
+    return new Response(JSON.stringify({ error: error }), {
+      status: 500,
+      headers: { 'Content-Type': 'application/json' },
+    });
   }
 }
 

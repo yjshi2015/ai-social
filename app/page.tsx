@@ -1,9 +1,29 @@
-import Image from "next/image";
+"use client";
 
-export default function Home() {
-  return (
-    <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
-      <h1>Welcome to AI-Social</h1>
-    </div>
-  );
+import React from 'react';
+import { createNetworkConfig, SuiClientProvider, WalletProvider } from '@mysten/dapp-kit';
+import { getFullnodeUrl } from '@mysten/sui/client';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import YourApp from './components/YourApp';
+
+// 配置网络
+const { networkConfig } = createNetworkConfig({
+    localnet: { url: getFullnodeUrl('localnet') },
+    testnest: { url: getFullnodeUrl('testnet') },
+    mainnet: { url: getFullnodeUrl('mainnet') },
+});
+const queryClient = new QueryClient();
+
+function App() {
+    return (
+        <QueryClientProvider client={queryClient}>
+            <SuiClientProvider networks={networkConfig} defaultNetwork="testnest">
+                <WalletProvider>
+                    <YourApp />
+                </WalletProvider>
+            </SuiClientProvider>
+        </QueryClientProvider>
+    );
 }
+
+export default App;

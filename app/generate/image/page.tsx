@@ -3,8 +3,6 @@
 import { useState } from "react";
 import Image from "next/image";
 
-
-
 interface WalrusResponse {
   newlyCreated: {
     blobObject: {
@@ -31,26 +29,20 @@ export default function ImageGenerator() {
     try {
       setLoading(true);
       
-      // 创建 FormData 对象
       const formData = new FormData();
       formData.append('prompt', prompt);
       formData.append('output_format', 'png');
 
-      const response = await fetch('https://api.stability.ai/v2beta/stable-image/generate/core', {
+      const response = await fetch('/api/generate-image', {
         method: 'POST',
-        headers: {
-          'authorization': `Bearer ${process.env.STABILITY_API_KEY}`,
-          'accept': 'image/*',
-        },
         body: formData,
       });
 
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(`HTTP error! status: ${response.status}, message: ${JSON.stringify(errorData)}`);
+        throw new Error(errorData.error || '图片生成失败');
       }
 
-      // 获取二进制数据并转换为 base64
       const blob = await response.blob();
       const base64 = await new Promise<string>((resolve) => {
         const reader = new FileReader();
@@ -61,6 +53,7 @@ export default function ImageGenerator() {
       setGeneratedImages([base64]);
     } catch (error) {
       console.error('图片生成失败:', error);
+      alert(error instanceof Error ? error.message : '图片生成失败，请重试');
     } finally {
       setLoading(false);
     }
@@ -82,11 +75,10 @@ export default function ImageGenerator() {
       const byteArray = new Uint8Array(byteNumbers);
       const blob = new Blob([byteArray], { type: 'image/png' });
 
-      // 创建 FormData
       const formData = new FormData();
       formData.append('file', blob, 'generated-image.png');
 
-      const response = await fetch('https://publisher.walrus-testnet.walrus.space/v1/store?epochs=5', {
+      const response = await fetch('/api/generate-image', {
         method: 'PUT',
         body: formData
       });
@@ -96,22 +88,18 @@ export default function ImageGenerator() {
       }
 
       const data: WalrusResponse = await response.json();
-      console.log(data);
       
       const newImage: UploadedImage = {
-        url: data.newlyCreated.blobObject.id, // 或其他URL构造方式
+        url: data.newlyCreated.blobObject.id,
         suiObjectId: data.newlyCreated.blobObject.id,
         blobId: data.newlyCreated.blobObject.blobId
       };
       
       setUploadedImages(prev => [...prev, newImage]);
-      
-      // 显示成功消息
-      alert(`图片已成功上传到 Walrus`);
+      alert('图片已成功上传到 Walrus');
 
     } catch (error) {
       console.error('上传到 Walrus 失败:', error);
-      alert('上传失败，请重试');
     } finally {
       setUploadLoading(false);
     }

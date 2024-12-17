@@ -2,6 +2,8 @@
 
 import { useState } from "react";
 import Image from "next/image";
+import { useSignAndExecuteTransaction } from '@mysten/dapp-kit';
+import { Transaction } from "@mysten/sui/transactions";
 
 interface WalrusResponse {
   newlyCreated: {
@@ -16,9 +18,11 @@ interface UploadedImage {
   url: string;
   suiObjectId: string;
   blobId: string;
+  claimed: boolean;
 }
 
 export default function ImageGenerator() {
+	const { mutate: signAndExecuteTransaction } = useSignAndExecuteTransaction();
   const [prompt, setPrompt] = useState("");
   const [generatedImages, setGeneratedImages] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
@@ -54,7 +58,7 @@ export default function ImageGenerator() {
     } catch (error) {
       console.error('图片生成失败:', error);
       console.log("4---------------");
-      alert(error instanceof Error ? error.message : '图片生成失败，请重试');
+      alert(error instanceof Error ? error.message : '图片生成失���，请重试');
     } finally {
       setLoading(false);
     }
@@ -93,7 +97,8 @@ export default function ImageGenerator() {
       const newImage: UploadedImage = {
         url: data.newlyCreated.blobObject.id,
         suiObjectId: data.newlyCreated.blobObject.id,
-        blobId: data.newlyCreated.blobObject.blobId
+        blobId: data.newlyCreated.blobObject.blobId,
+        claimed: false
       };
       
       setUploadedImages(prev => [...prev, newImage]);
@@ -103,6 +108,50 @@ export default function ImageGenerator() {
       console.error('上传到 Walrus 失败:', error);
     } finally {
       setUploadLoading(false);
+    }
+  };
+
+  const claimReward = async (suiObjectId: string, blobId: string) => {
+    try {
+      console.log(blobId);
+      console.log(suiObjectId);
+      const txb = new Transaction();
+      
+      txb.moveCall({
+        target: '0xb3333cae47d18c47416d3a327df6aec8644709682e6c0b6e6668f5974be44238::ai_social::record_and_reward',
+        arguments: [
+          txb.pure.string(blobId),
+          txb.pure.address(suiObjectId),
+          // DisplayImages
+          txb.object('0x745bf4e210b31d38ad425935376e4d12e87d7900bae0618e9873a21614b38f54'),
+          txb.pure.u64(5000000000),
+          // MemePool
+          txb.object('0x056c40e87700d43a5c66864fb9ecb3ea35873e3897a0d9c5275e5d542fd5cca7'),
+        ],
+      });
+
+      signAndExecuteTransaction({
+        transaction: txb,
+      }, {
+        onSuccess: (result) => {
+          console.log('交易成功:', result);
+          setUploadedImages(prev => 
+            prev.map(img => 
+              img.suiObjectId === suiObjectId 
+                ? { ...img, claimed: true }
+                : img
+            )
+          );
+          alert('奖励领取成功！');
+        },
+        onError: (error) => {
+          console.error('交易失败:', error);
+          alert('领取奖励失败，请重试');
+        },
+      });
+    } catch (error) {
+      console.error('领取奖励失败:', error);
+      alert('领取奖励失败，请重试');
     }
   };
 
@@ -184,6 +233,21 @@ export default function ImageGenerator() {
                     </div>
                   </div>
                 </div>
+                {!image.claimed && (
+                  <div className="mt-4">
+                    <button
+                      onClick={() => claimReward(image.suiObjectId, image.blobId)}
+                      className="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600 transition-colors"
+                    >
+                      领取创作奖励
+                    </button>
+                  </div>
+                )}
+                {image.claimed && (
+                  <div className="mt-4">
+                    <span className="text-gray-500">✓ 已领取奖励</span>
+                  </div>
+                )}
               </div>
             ))}
           </div>

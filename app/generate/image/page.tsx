@@ -53,6 +53,7 @@ export default function ImageGenerator() {
       setGeneratedImages([base64]);
     } catch (error) {
       console.error('图片生成失败:', error);
+      console.log("4---------------");
       alert(error instanceof Error ? error.message : '图片生成失败，请重试');
     } finally {
       setLoading(false);

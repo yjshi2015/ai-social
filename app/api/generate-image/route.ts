@@ -43,17 +43,25 @@ export async function POST(request: Request) {
 export async function PUT(request: Request) {
   try {
     const formData = await request.formData();
+    const file = formData.get('file') as File;
     
+    // 确保文件是 PNG 格式
     const response = await fetch('https://publisher.walrus-testnet.walrus.space/v1/store?epochs=5', {
       method: 'PUT',
-      body: formData
+      headers: {
+        'Content-Type': 'image/png',  // 明确指定 Content-Type
+      },
+      body: file,  // 直接发送文件内容，而不是 FormData
     });
 
     if (!response.ok) {
+      const errorData = await response.json();
+      console.error('Walrus 上传错误:', errorData);
       throw new Error('Walrus 上传失败');
     }
 
     const data = await response.json();
+    console.log('Walrus 上传响应:', data);
     return NextResponse.json(data);
   } catch (error) {
     console.error('上传到 Walrus 失败:', error);

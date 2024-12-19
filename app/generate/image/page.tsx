@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Image from "next/image";
 import { useSignAndExecuteTransaction } from '@mysten/dapp-kit';
 import { Transaction } from "@mysten/sui/transactions";
@@ -21,10 +21,15 @@ interface UploadedImage {
   claimed: boolean;
 }
 
+interface GeneratedImage {
+  url: string;
+  blob: Blob;
+}
+
 export default function ImageGenerator() {
 	const { mutate: signAndExecuteTransaction } = useSignAndExecuteTransaction();
   const [prompt, setPrompt] = useState("");
-  const [generatedImages, setGeneratedImages] = useState<string[]>([]);
+  const [generatedImages, setGeneratedImages] = useState<GeneratedImage[]>([]);
   const [loading, setLoading] = useState(false);
   const [uploadLoading, setUploadLoading] = useState(false);
   const [uploadedImages, setUploadedImages] = useState<UploadedImage[]>([]);
@@ -36,6 +41,7 @@ export default function ImageGenerator() {
       const formData = new FormData();
       formData.append('prompt', prompt);
       formData.append('output_format', 'png');
+      formData.append('style_preset', 'fantasy-art');
 
       const response = await fetch('/api/generate-image', {
         method: 'POST',
@@ -48,40 +54,23 @@ export default function ImageGenerator() {
       }
 
       const blob = await response.blob();
-      const base64 = await new Promise<string>((resolve) => {
-        const reader = new FileReader();
-        reader.onloadend = () => resolve(reader.result as string);
-        reader.readAsDataURL(blob);
-      });
+      const url = URL.createObjectURL(blob);
 
-      setGeneratedImages([base64]);
+      setGeneratedImages([{ url, blob }]);
     } catch (error) {
       console.error('图片生成失败:', error);
-      console.log("4---------------");
-      alert(error instanceof Error ? error.message : '图片生成失���，请重试');
+      alert(error instanceof Error ? error.message : '图片生成失败，请重试');
     } finally {
       setLoading(false);
     }
   };
 
-  const uploadToWalrus = async (base64Image: string) => {
+  const uploadToWalrus = async (image: GeneratedImage) => {
     try {
       setUploadLoading(true);
       
-      // 将 base64 转换为 Blob
-      const base64Data = base64Image.split(',')[1];
-      const byteCharacters = atob(base64Data);
-      const byteNumbers = new Array(byteCharacters.length);
-      
-      for (let i = 0; i < byteCharacters.length; i++) {
-        byteNumbers[i] = byteCharacters.charCodeAt(i);
-      }
-      
-      const byteArray = new Uint8Array(byteNumbers);
-      const blob = new Blob([byteArray], { type: 'image/png' });
-
       const formData = new FormData();
-      formData.append('file', blob, 'generated-image.png');
+      formData.append('file', image.blob);
 
       const response = await fetch('/api/generate-image', {
         method: 'PUT',
@@ -89,10 +78,13 @@ export default function ImageGenerator() {
       });
 
       if (!response.ok) {
+        const errorData = await response.json();
+        console.error('上传错误:', errorData);
         throw new Error('上传失败');
       }
 
       const data: WalrusResponse = await response.json();
+      console.log('上传响应:', data);
       
       const newImage: UploadedImage = {
         url: data.newlyCreated.blobObject.id,
@@ -106,6 +98,7 @@ export default function ImageGenerator() {
 
     } catch (error) {
       console.error('上传到 Walrus 失败:', error);
+      alert('上传失败，请重试');
     } finally {
       setUploadLoading(false);
     }
@@ -155,6 +148,12 @@ export default function ImageGenerator() {
     }
   };
 
+  useEffect(() => {
+    return () => {
+      generatedImages.forEach(image => URL.revokeObjectURL(image.url));
+    };
+  }, [generatedImages]);
+
   return (
     <div className="max-w-4xl mx-auto p-4">
       <h1 className="text-2xl font-bold mb-4">AI 图片生成器</h1>
@@ -178,17 +177,17 @@ export default function ImageGenerator() {
       </button>
 
       <div className="mt-8 grid grid-cols-2 gap-4">
-        {generatedImages.map((imageUrl, index) => (
+        {generatedImages.map((image, index) => (
           <div key={index} className="relative aspect-square">
             <Image
-              src={imageUrl}
+              src={image.url}
               alt={`Generated image ${index + 1}`}
               fill
               className="object-cover rounded"
             />
             <button
               className="absolute bottom-2 right-2 bg-green-500 text-white px-3 py-1 rounded text-sm disabled:bg-gray-400"
-              onClick={() => uploadToWalrus(imageUrl)}
+              onClick={() => uploadToWalrus(image)}
               disabled={uploadLoading}
             >
               {uploadLoading ? '上传中...' : '上传到 Walrus'}

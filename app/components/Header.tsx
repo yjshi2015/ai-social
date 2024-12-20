@@ -23,7 +23,7 @@ export default function Header() {
   );
 
   // 获取 Social Coin 余额，添加自动刷新
-  const { data: socialBalance, refetch: refetchSocial } = useSuiClientQuery(
+  const { data: socialBalance } = useSuiClientQuery(
     'getBalance',
     {
       owner: account?.address || '',

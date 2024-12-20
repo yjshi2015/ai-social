@@ -2,12 +2,14 @@
 
 import { useSuiClientQuery } from '@mysten/dapp-kit';
 import Image from 'next/image';
+import { FaHeart, FaGift } from 'react-icons/fa';
 
 interface ImageInfo {
   blob_id: string;
   blob_obj: string;
   owner: string;
 }
+
 
 export default function Display() {
   const displayImagesId = '0x745bf4e210b31d38ad425935376e4d12e87d7900bae0618e9873a21614b38f54';
@@ -52,6 +54,20 @@ export default function Display() {
                     fill
                     className="object-cover rounded-lg"
                   />
+                  <div className="absolute bottom-2 left-2 flex space-x-2">
+                    <button 
+                      className="bg-white/80 hover:bg-white p-2 rounded-full transition-colors"
+                      onClick={() => console.log('点赞')}
+                    >
+                      <FaHeart className="text-red-500 w-5 h-5" />
+                    </button>
+                    <button 
+                      className="bg-white/80 hover:bg-white p-2 rounded-full transition-colors"
+                      onClick={() => console.log('打赏')}
+                    >
+                      <FaGift className="text-purple-500 w-5 h-5" />
+                    </button>
+                  </div>
                 </div>
                 <div className="space-y-2">
                   <div>

@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import Image from "next/image";
 import { useSignAndExecuteTransaction, useCurrentAccount } from '@mysten/dapp-kit';
 import { Transaction } from "@mysten/sui/transactions";
+import toast from 'react-hot-toast';
 
 interface WalrusResponse {
   newlyCreated: {
@@ -60,7 +61,7 @@ export default function ImageGenerator() {
       setGeneratedImages([{ url, blob }]);
     } catch (error) {
       console.error('图片生成失败:', error);
-      alert(error instanceof Error ? error.message : '图片生成失败，请重试');
+      toast.error(error instanceof Error ? error.message : '图片生成失败，请重试');
     } finally {
       setLoading(false);
     }
@@ -95,11 +96,11 @@ export default function ImageGenerator() {
       };
       
       setUploadedImages(prev => [...prev, newImage]);
-      alert('图片已成功上传到 Walrus');
+      toast.success('图片已成功上传到 Walrus');
 
     } catch (error) {
       console.error('上传到 Walrus 失败:', error);
-      alert('上传失败，请重试');
+      toast.error('上传失败，请重试');
     } finally {
       setUploadLoading(false);
     }
@@ -107,7 +108,7 @@ export default function ImageGenerator() {
 
   const claimReward = async (suiObjectId: string, blobId: string) => {
     if (!account) {
-      alert('请先连接钱包');
+      toast.error('请先连接钱包');
       return;
     }
 
@@ -134,8 +135,7 @@ export default function ImageGenerator() {
         {
           onSuccess: (result) => {
             console.log('领取成功:', result);
-            alert('领取成功！');
-            // 刷新余额
+            toast.success('领取成功！');
             window.dispatchEvent(new Event('refreshBalances'));
             setUploadedImages(prev => 
               prev.map(img => 
@@ -147,13 +147,13 @@ export default function ImageGenerator() {
           },
           onError: (error) => {
             console.error('领取失败:', error);
-            alert('领取失败，请重试');
+            toast.error('领取失败，请重试');
           },
         },
       );
     } catch (error) {
       console.error('领取失败:', error);
-      alert('领取失败，请重试');
+      toast.error('领取失败，请重试');
     }
   };
 

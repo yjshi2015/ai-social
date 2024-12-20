@@ -7,6 +7,7 @@ import Header from './components/Header';
 import { Geist, Geist_Mono } from "next/font/google";
 import '@mysten/dapp-kit/dist/index.css';
 import "./globals.css";
+import { Toaster } from 'react-hot-toast';
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -42,6 +43,7 @@ export default function RootLayout({
                 <main className="py-10">
                   {children}
                 </main>
+                <Toaster position="top-center" />
               </div>
             </WalletProvider>
           </SuiClientProvider>

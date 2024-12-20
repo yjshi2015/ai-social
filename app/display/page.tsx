@@ -5,6 +5,7 @@ import { useSuiClient } from '@mysten/dapp-kit';
 import Image from 'next/image';
 import { FaHeart, FaGift } from 'react-icons/fa';
 import { Transaction } from "@mysten/sui/transactions";
+import toast from 'react-hot-toast';
 
 interface ImageInfo {
   blob_id: string;
@@ -42,48 +43,42 @@ export default function Display() {
 
   const handleTip = async (owner: string) => {
     if (!account) {
-      alert('请先连接钱包');
+      toast.error('请先连接钱包');
       return;
     }
 
     try {
-      // 查询所有 Social Coin 对象
       const { data: coinsData } = await client.getCoins({
         owner: account?.address || '',
         coinType: '0xb3333cae47d18c47416d3a327df6aec8644709682e6c0b6e6668f5974be44238::ai_social::AI_SOCIAL',
       });
 
       if (!coinsData?.length) {
-        alert('没有足够的 Social Coin');
+        toast.error('没有足够的 Social Coin');
         return;
       }
 
       const txb = new Transaction();
 
-      // 如果有多个 Coin，先合并
       if (coinsData.length > 1) {
         const primaryCoin = coinsData[0];
         const mergeCoins = coinsData.slice(1);
         
-        // 合并所有 Coin
         txb.mergeCoins(
           txb.object(primaryCoin.coinObjectId),
           mergeCoins.map(coin => txb.object(coin.coinObjectId))
         );
 
-        // 从合并后的 Coin 中分割出打赏金额
         const [tipCoin] = txb.splitCoins(
           txb.object(primaryCoin.coinObjectId),
-          [1000000000] // 1 SOCIAL
+          [1000000000]
         );
 
-        // 执行打赏
         txb.transferObjects([tipCoin], txb.pure.address(owner));
       } else {
-        // 只有一个 Coin 的情况
         const [tipCoin] = txb.splitCoins(
           txb.object(coinsData[0].coinObjectId),
-          [1000000000] // 1 SOCIAL
+          [1000000000]
         );
 
         txb.transferObjects([tipCoin], txb.pure.address(owner));
@@ -96,19 +91,18 @@ export default function Display() {
         {
           onSuccess: (result) => {
             console.log('打赏成功:', result);
-            alert('打赏成功！');
-            // 刷新余额
+            toast.success('打赏成功！');
             window.dispatchEvent(new Event('refreshBalances'));
           },
           onError: (error) => {
             console.error('打赏失败:', error);
-            alert('打赏失败，请重试');
+            toast.error('打赏失败，请重试');
           },
         },
       );
     } catch (error) {
       console.error('打赏失败:', error);
-      alert('打赏失败，请重试');
+      toast.error('打赏失败，请重试');
     }
   };
 

@@ -10,7 +10,7 @@ export default function Header() {
   const account = useCurrentAccount();
 
   // 获取 SUI 余额，添加自动刷新
-  const { data: suiBalance, refetch: refetchSui } = useSuiClientQuery(
+  const { data: suiBalance } = useSuiClientQuery(
     'getBalance',
     {
       owner: account?.address || '',

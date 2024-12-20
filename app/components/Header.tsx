@@ -37,7 +37,7 @@ export default function Header() {
   ];
 
   return (
-    <header className="bg-white shadow-sm">
+    <header className="bg-gradient-to-r from-blue-500 to-purple-600 text-white shadow-lg">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
           <nav className="flex space-x-8">
@@ -45,28 +45,37 @@ export default function Header() {
               <Link
                 key={item.path}
                 href={item.path}
-                className={`inline-flex items-center px-1 pt-1 text-sm font-medium border-b-2 ${
+                className={`inline-flex items-center px-3 py-2 rounded-md text-sm font-bold transition-colors duration-200 ${
                   pathname === item.path
-                    ? 'border-blue-500 text-gray-900'
-                    : 'border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700'
+                    ? 'bg-white/20 text-white'
+                    : 'text-white/80 hover:bg-white/10 hover:text-white'
                 }`}
               >
                 {item.name}
               </Link>
             ))}
           </nav>
-          <div className="flex items-center space-x-4">
+          <div className="flex items-center space-x-6">
             {account && (
-              <>
-                <div className="text-sm text-gray-600">
-                  SUI: {(Number(suiBalance?.totalBalance || 0) / 1000000000).toFixed(2)}
+              <div className="flex space-x-4 bg-white/10 rounded-lg px-4 py-2">
+                <div className="flex items-center space-x-2">
+                  <span className="text-white/60 text-sm">SUI:</span>
+                  <span className="font-medium text-white">
+                    {(Number(suiBalance?.totalBalance || 0) / 1000000000).toFixed(2)}
+                  </span>
                 </div>
-                <div className="text-sm text-gray-600">
-                  SOCIAL COIN: {(Number(socialBalance?.totalBalance || 0) / 1000000000).toFixed(2)}
+                <div className="w-px bg-white/20" />
+                <div className="flex items-center space-x-2">
+                  <span className="text-white/60 text-sm">SOCIAL:</span>
+                  <span className="font-medium text-white">
+                    {(Number(socialBalance?.totalBalance || 0) / 1000000000).toFixed(2)}
+                  </span>
                 </div>
-              </>
+              </div>
             )}
-            <ConnectButton />
+            <div className="pl-2 border-l border-white/20">
+              <ConnectButton />
+            </div>
           </div>
         </div>
       </div>

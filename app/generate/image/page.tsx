@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Image from "next/image";
-import { useSignAndExecuteTransaction } from '@mysten/dapp-kit';
+import { useSignAndExecuteTransaction, useCurrentAccount } from '@mysten/dapp-kit';
 import { Transaction } from "@mysten/sui/transactions";
 
 interface WalrusResponse {
@@ -28,6 +28,7 @@ interface GeneratedImage {
 
 export default function ImageGenerator() {
 	const { mutate: signAndExecuteTransaction } = useSignAndExecuteTransaction();
+  const account = useCurrentAccount();
   const [prompt, setPrompt] = useState("");
   const [generatedImages, setGeneratedImages] = useState<GeneratedImage[]>([]);
   const [loading, setLoading] = useState(false);
@@ -105,6 +106,11 @@ export default function ImageGenerator() {
   };
 
   const claimReward = async (suiObjectId: string, blobId: string) => {
+    if (!account) {
+      alert('请先连接钱包');
+      return;
+    }
+
     try {
       console.log(blobId);
       console.log(suiObjectId);
@@ -115,36 +121,39 @@ export default function ImageGenerator() {
         arguments: [
           txb.pure.string(blobId),
           txb.pure.address(suiObjectId),
-          // DisplayImages
           txb.object('0x745bf4e210b31d38ad425935376e4d12e87d7900bae0618e9873a21614b38f54'),
           txb.pure.u64(5000000000),
-          // MemePool
           txb.object('0x056c40e87700d43a5c66864fb9ecb3ea35873e3897a0d9c5275e5d542fd5cca7'),
         ],
       });
 
-      signAndExecuteTransaction({
-        transaction: txb,
-      }, {
-        onSuccess: (result) => {
-          console.log('交易成功:', result);
-          setUploadedImages(prev => 
-            prev.map(img => 
-              img.suiObjectId === suiObjectId 
-                ? { ...img, claimed: true }
-                : img
-            )
-          );
-          alert('奖励领取成功！');
+      signAndExecuteTransaction(
+        {
+          transaction: txb,
         },
-        onError: (error) => {
-          console.error('交易失败:', error);
-          alert('领取奖励失败，请重试');
+        {
+          onSuccess: (result) => {
+            console.log('领取成功:', result);
+            alert('领取成功！');
+            // 刷新余额
+            window.dispatchEvent(new Event('refreshBalances'));
+            setUploadedImages(prev => 
+              prev.map(img => 
+                img.suiObjectId === suiObjectId 
+                  ? { ...img, claimed: true }
+                  : img
+              )
+            );
+          },
+          onError: (error) => {
+            console.error('领取失败:', error);
+            alert('领取失败，请重试');
+          },
         },
-      });
+      );
     } catch (error) {
-      console.error('领取奖励失败:', error);
-      alert('领取奖励失败，请重试');
+      console.error('领取失败:', error);
+      alert('领取失败，请重试');
     }
   };
 

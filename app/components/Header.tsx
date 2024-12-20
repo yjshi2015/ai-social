@@ -9,8 +9,8 @@ export default function Header() {
   const pathname = usePathname();
   const account = useCurrentAccount();
 
-  // 获取 SUI 余额
-  const { data: suiBalance } = useSuiClientQuery(
+  // 获取 SUI 余额，添加自动刷新
+  const { data: suiBalance, refetch: refetchSui } = useSuiClientQuery(
     'getBalance',
     {
       owner: account?.address || '',
@@ -18,15 +18,20 @@ export default function Header() {
     },
     {
       enabled: !!account,
+      refetchInterval: 3000, // 每3秒自动刷新
     }
   );
 
-  // 获取 Social Coin 余额
-  const { data: socialBalance } = useSuiClientQuery(
+  // 获取 Social Coin 余额，添加自动刷新
+  const { data: socialBalance, refetch: refetchSocial } = useSuiClientQuery(
     'getBalance',
     {
       owner: account?.address || '',
       coinType: '0xb3333cae47d18c47416d3a327df6aec8644709682e6c0b6e6668f5974be44238::ai_social::AI_SOCIAL',
+    },
+    {
+      enabled: !!account,
+      refetchInterval: 3000, // 每3秒自动刷新
     }
   );
 

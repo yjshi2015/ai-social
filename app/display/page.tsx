@@ -41,6 +41,11 @@ export default function Display() {
   const images = data?.data?.content?.fields?.images || [];
 
   const handleTip = async (owner: string) => {
+    if (!account) {
+      alert('请先连接钱包');
+      return;
+    }
+
     try {
       // 查询所有 Social Coin 对象
       const { data: coinsData } = await client.getCoins({
@@ -73,13 +78,7 @@ export default function Display() {
         );
 
         // 执行打赏
-        txb.moveCall({
-          target: '0xb3333cae47d18c47416d3a327df6aec8644709682e6c0b6e6668f5974be44238::ai_social::tip',
-          arguments: [
-            tipCoin,
-            txb.pure.address(owner),
-          ],
-        });
+        txb.transferObjects([tipCoin], txb.pure.address(owner));
       } else {
         // 只有一个 Coin 的情况
         const [tipCoin] = txb.splitCoins(
@@ -98,6 +97,8 @@ export default function Display() {
           onSuccess: (result) => {
             console.log('打赏成功:', result);
             alert('打赏成功！');
+            // 刷新余额
+            window.dispatchEvent(new Event('refreshBalances'));
           },
           onError: (error) => {
             console.error('打赏失败:', error);

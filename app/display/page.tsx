@@ -1,8 +1,10 @@
 'use client';
 
-import { useSuiClientQuery } from '@mysten/dapp-kit';
+import { useSuiClientQuery, useSignAndExecuteTransaction, useCurrentAccount } from '@mysten/dapp-kit';
+import { useSuiClient } from '@mysten/dapp-kit';
 import Image from 'next/image';
 import { FaHeart, FaGift } from 'react-icons/fa';
+import { Transaction } from "@mysten/sui/transactions";
 
 interface ImageInfo {
   blob_id: string;
@@ -12,6 +14,10 @@ interface ImageInfo {
 
 
 export default function Display() {
+  const client = useSuiClient();
+  const account = useCurrentAccount();
+  const { mutate: signAndExecuteTransaction } = useSignAndExecuteTransaction();
+  
   const displayImagesId = '0x745bf4e210b31d38ad425935376e4d12e87d7900bae0618e9873a21614b38f54';
 
   const { data, isPending, isError, error } = useSuiClientQuery(
@@ -33,6 +39,77 @@ export default function Display() {
   }
 
   const images = data?.data?.content?.fields?.images || [];
+
+  const handleTip = async (owner: string) => {
+    try {
+      // 查询所有 Social Coin 对象
+      const { data: coinsData } = await client.getCoins({
+        owner: account?.address || '',
+        coinType: '0xb3333cae47d18c47416d3a327df6aec8644709682e6c0b6e6668f5974be44238::ai_social::AI_SOCIAL',
+      });
+
+      if (!coinsData?.length) {
+        alert('没有足够的 Social Coin');
+        return;
+      }
+
+      const txb = new Transaction();
+
+      // 如果有多个 Coin，先合并
+      if (coinsData.length > 1) {
+        const primaryCoin = coinsData[0];
+        const mergeCoins = coinsData.slice(1);
+        
+        // 合并所有 Coin
+        txb.mergeCoins(
+          txb.object(primaryCoin.coinObjectId),
+          mergeCoins.map(coin => txb.object(coin.coinObjectId))
+        );
+
+        // 从合并后的 Coin 中分割出打赏金额
+        const [tipCoin] = txb.splitCoins(
+          txb.object(primaryCoin.coinObjectId),
+          [1000000000] // 1 SOCIAL
+        );
+
+        // 执行打赏
+        txb.moveCall({
+          target: '0xb3333cae47d18c47416d3a327df6aec8644709682e6c0b6e6668f5974be44238::ai_social::tip',
+          arguments: [
+            tipCoin,
+            txb.pure.address(owner),
+          ],
+        });
+      } else {
+        // 只有一个 Coin 的情况
+        const [tipCoin] = txb.splitCoins(
+          txb.object(coinsData[0].coinObjectId),
+          [1000000000] // 1 SOCIAL
+        );
+
+        txb.transferObjects([tipCoin], txb.pure.address(owner));
+      }
+
+      signAndExecuteTransaction(
+        {
+          transaction: txb,
+        },
+        {
+          onSuccess: (result) => {
+            console.log('打赏成功:', result);
+            alert('打赏成功！');
+          },
+          onError: (error) => {
+            console.error('打赏失败:', error);
+            alert('打赏失败，请重试');
+          },
+        },
+      );
+    } catch (error) {
+      console.error('打赏失败:', error);
+      alert('打赏失败，请重试');
+    }
+  };
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -63,7 +140,7 @@ export default function Display() {
                     </button>
                     <button 
                       className="bg-white/80 hover:bg-white p-2 rounded-full transition-colors"
-                      onClick={() => console.log('打赏')}
+                      onClick={() => handleTip(image.fields.owner)}
                     >
                       <FaGift className="text-purple-500 w-5 h-5" />
                     </button>

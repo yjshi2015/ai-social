@@ -3,9 +3,32 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { ConnectButton } from '@mysten/dapp-kit';
+import { useCurrentAccount, useSuiClientQuery } from '@mysten/dapp-kit';
 
 export default function Header() {
   const pathname = usePathname();
+  const account = useCurrentAccount();
+
+  // 获取 SUI 余额
+  const { data: suiBalance } = useSuiClientQuery(
+    'getBalance',
+    {
+      owner: account?.address || '',
+      coinType: '0x2::sui::SUI',
+    },
+    {
+      enabled: !!account,
+    }
+  );
+
+  // 获取 Social Coin 余额
+  const { data: socialBalance } = useSuiClientQuery(
+    'getBalance',
+    {
+      owner: account?.address || '',
+      coinType: '0xb3333cae47d18c47416d3a327df6aec8644709682e6c0b6e6668f5974be44238::ai_social::AI_SOCIAL',
+    }
+  );
 
   const navItems = [
     { name: 'Home', path: '/' },
@@ -32,7 +55,17 @@ export default function Header() {
               </Link>
             ))}
           </nav>
-          <div className="flex items-center">
+          <div className="flex items-center space-x-4">
+            {account && (
+              <>
+                <div className="text-sm text-gray-600">
+                  SUI: {(Number(suiBalance?.totalBalance || 0) / 1000000000).toFixed(2)}
+                </div>
+                <div className="text-sm text-gray-600">
+                  SOCIAL COIN: {(Number(socialBalance?.totalBalance || 0) / 1000000000).toFixed(2)}
+                </div>
+              </>
+            )}
             <ConnectButton />
           </div>
         </div>

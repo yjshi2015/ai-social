@@ -27,14 +27,17 @@ export async function POST(request: Request) {
         'Content-Type': 'image/png'
       }
     });
-  } catch (error) {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  } catch (error: any) {
     console.error(error);
     console.log("2---------------");
     console.error(error.message);
     console.log("2.2---------------");
     return new Response(JSON.stringify({ error: error.message }), {
       status: 500,
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json',
+      },
     });
   }
 }

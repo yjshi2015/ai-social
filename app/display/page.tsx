@@ -39,7 +39,8 @@ export default function Display() {
     return <div>Error: {error.message}</div>;
   }
 
-  const images = data?.data?.content?.fields?.images || [];
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const images = (data?.data?.content as any)?.fields?.images || [];
 
   const handleTip = async (owner: string) => {
     if (!account) {

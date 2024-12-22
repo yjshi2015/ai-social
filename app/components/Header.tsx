@@ -27,7 +27,7 @@ export default function Header() {
     'getBalance',
     {
       owner: account?.address || '',
-      coinType: '0xb3333cae47d18c47416d3a327df6aec8644709682e6c0b6e6668f5974be44238::ai_social::AI_SOCIAL',
+      coinType: '0x2cb5967d08dc7750493b8990b9fc93721b4e013608183045dda11875316fbc45::ai_social::AI_SOCIAL',
     },
     {
       enabled: !!account,

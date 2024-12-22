@@ -118,13 +118,13 @@ export default function ImageGenerator() {
       const txb = new Transaction();
       
       txb.moveCall({
-        target: '0xb3333cae47d18c47416d3a327df6aec8644709682e6c0b6e6668f5974be44238::ai_social::record_and_reward',
+        target: '0x2cb5967d08dc7750493b8990b9fc93721b4e013608183045dda11875316fbc45::ai_social::record_and_reward',
         arguments: [
           txb.pure.string(blobId),
           txb.pure.address(suiObjectId),
-          txb.object('0x745bf4e210b31d38ad425935376e4d12e87d7900bae0618e9873a21614b38f54'),
+          txb.object('0x33dea50c97564a3f0b367360e474ca07e0f2128a086e820ba003b641ac32195c'),
           txb.pure.u64(5000000000),
-          txb.object('0x056c40e87700d43a5c66864fb9ecb3ea35873e3897a0d9c5275e5d542fd5cca7'),
+          txb.object('0xc2a1ee4b2190f7afff48399d532bbae13cafe8afcaa83528addcc137c1f7a346'),
         ],
       });
 

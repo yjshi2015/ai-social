@@ -19,7 +19,7 @@ export default function Display() {
   const account = useCurrentAccount();
   const { mutate: signAndExecuteTransaction } = useSignAndExecuteTransaction();
   
-  const displayImagesId = '0x745bf4e210b31d38ad425935376e4d12e87d7900bae0618e9873a21614b38f54';
+  const displayImagesId = '0x33dea50c97564a3f0b367360e474ca07e0f2128a086e820ba003b641ac32195c';
 
   const { data, isPending, isError, error } = useSuiClientQuery(
     'getObject',
@@ -51,7 +51,7 @@ export default function Display() {
     try {
       const { data: coinsData } = await client.getCoins({
         owner: account?.address || '',
-        coinType: '0xb3333cae47d18c47416d3a327df6aec8644709682e6c0b6e6668f5974be44238::ai_social::AI_SOCIAL',
+        coinType: '0x2cb5967d08dc7750493b8990b9fc93721b4e013608183045dda11875316fbc45::ai_social::AI_SOCIAL',
       });
 
       if (!coinsData?.length) {
